@@ -1,0 +1,78 @@
+.TH sctp_test 1
+.SH NAME
+sctp_test \- Send and receive messages via SCTP
+
+.SH SYNOPSIS
+.B sctp_test -H -P -h -p -l|s
+
+.SH DESCRIPTION
+ This is a userspace test application for the SCTP Linux kernel reference
+implementation.
+
+.SH OPTIONS
+.PP
+.IP "-H \fIlocal-addr\fP"
+.IP "-P \fIlocal-port\fP"
+.IP "-h \fIremote-addr\fP"
+.IP "-p \fIremote-port\fP"
+.IP "-s"
+Act as client
+.IP "-l"
+Listen for connections (server) 
+.IP "-a \fIassoc_pattern\fP"
+assoc_pattern in the mixed mode
+0 = sequential ascending(default)
+1 = random
+.IP "-d \fIdebug\fP"
+0 = none
+1 = min(default)
+2 = max
+.IP "-c \fItestcase\fP"
+0 = 1 byte packets.
+1 = 1352 byte packets.
+    (fragmentation point for an i/f with 1500 as mtu.)
+2 = 1353 byte packets.
+    (min. size at which fragmentation occurs
+    for an i/f with 1500 as mtu.)
+3 = Sequence of 1, 1353, 32768 byte packets.
+4 = Sequence of following size packets.
+    (1, 1000, 2000, 3000, 5000, 10000,15000, 20000, 25000, 32768)
+5 = 32768 byte packets.
+    (default max receive window size.)
+6 = random size packets.
+.IP "-ve \fIvalue\fP"
+Packets of specifed size.
+.IP "-m \fImsgsize\fP"
+(1500-65515, default value 32768)
+.IP "-x \fInumber_of_repeats\fP"
+.IP "-o \fIorder_pattern\fP"
+0 = all unordered(default)
+1 = all ordered
+2 = alternating
+3 = random
+.I "-t \fIstream_pattern\fP"
+ 0 = sequential ascending(default)
+ 1 = random
+.I "-M \fImax_stream\fP"
+(default value 0)
+.I "-r \fIseed\fP"
+(default 0, use time())
+.I "-L \fInum_ports\fP"
+(default value 0). Run the mixed mode
+.I "-S \fInum_ports\fP"
+(default value 0). Run the mixed mode
+.I "-D"
+Drain. If in client mode do a read following send.
+
+.SH USAGE
+.PP
+.B server:
+.B sctp_test -H \fIlocal_addr\fP -P \fIlocal_port\fP -l
+
+.PP
+.B client:
+.B sctp_test -H \fIlocal_addr\fP -P \fIlocal_port\fP -h \fIremote_addr\fP
+ -p \fIremote-port\fP -s
+
+.SH AUTHOR
+Michael Biebl <biebl@debian.org>

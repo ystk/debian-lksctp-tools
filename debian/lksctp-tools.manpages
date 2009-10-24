@@ -1,0 +1,4 @@
+debian/man/sctp_test.1
+debian/man/sctp_darn.1
+debian/man/withsctp.1
+debian/man/checksctp.1

@@ -1,0 +1,23 @@
+.TH withsctp 1
+.SH NAME
+withsctp \- Run TCP binaries over SCTP
+
+.SH SYNOPSIS
+.B withsctp
+
+.SH DESCRIPTION
+
+This package enables you to use SCTP with your existing TCP-based binaries.
+withsctp uses the LD_PRELOAD hack to intercept library calls used for 
+TCP connections and use SCTP instead.
+
+.SH EXAMPLES
+.TP
+withsctp xinetd	
+# Start xinetd stream services on SCTP.
+.TP
+withsctp telnet localhost	
+# Make a telnet over SCTP/IP connection.
+
+.SH AUTHOR
+Michael Biebl <biebl@debian.org>

@@ -1,0 +1,71 @@
+.TH sctp_darn 1
+.SH NAME
+sctp_darn \- Send and receive messages via SCTP
+
+.SH SYNOPSIS
+.PP
+.B sctp_darn 
+-H \fIlocal_address\fP -P \fIlocal_port\fP [-h \fIremote_host\fP] [-p \fIremote_port\fP] -l|s
+
+.SH DESCRIPTION
+
+This is a userspace test application for the SCTP Linux kernel reference
+implementation state machine.  It is vaguely inspired by Stevens'
+program "sock".
+
+It has the limited ability to send messages and to listen for messages
+sent via SCTP.
+
+.SH OPTIONS
+.PP
+.IP "-H, --local \fIlocal_address\fP"            
+specify one of the local addresses
+.IP "-P, --local-port \fIlocal_port\fP"       
+specify the port number for local addresses
+.IP "-h, --remote \fIremote_address\fP"
+specify the peer address
+.IP "-p, --remote-port \fIremote_port\fP"      
+specify the port number for the peer address
+.IP "-l, --listen"           
+print messages received from the peer
+.IP "-s, --send"             
+send messages to the peer
+.IP "-B, --bindx-add \fIaddress\fP"        
+add the specified address(es) as additional bind
+addresses to the local socket. Multiple addresses can
+be specified by this argument multiple times.
+For example, '-B 10.0.0.1 -B 20.0.0.2'.
+.IP "-b, --bindx-rem \fIaddress\fP"        
+remove the specified address(es) from the bind
+addresses of the local socket. Multiple addresses can
+be specified by this argument multiple times.
+For example, '-b 10.0.0.1 -b 20.0.0.2'.
+.IP "-I"                     
+use the interactive mode.
+.IP "-i"
+setup the specified number of endpoints by using the
+specified local host (-H) and local port (-P). The port
+number will be incremented by one for each additional
+endpoint.  All of these endpoints will be listening.
+If a remote host (-h) and a remote port are also
+specified, the first endpoint will start sending fixed
+sized messages to the remote host.
+.IP "-m \fIsize\fP"                     
+specify the sockopt sndbuf/rcvbuf size.
+.IP "-n"
+set the socket(s) to be in the non-blocking mode.
+collect messages from stdin and deliver them to the peer
+.IP "--use-poll"              
+use system call poll() for polling among the
+number of endpoints specified by the -i option. Without
+this option, select() would be used as default.
+.IP "-t"
+use SOCK_STREAM tcp-style sockets.
+.IP "-z \fIsize\fP"
+specify the message size to be sent.  The default
+message size generated would be 16K.
+.IP "--interface \fIifname\fP"   
+select interface for sin6_scope_id.
+
+.SH AUTHOR
+Michael Biebl <biebl@debian.org>
