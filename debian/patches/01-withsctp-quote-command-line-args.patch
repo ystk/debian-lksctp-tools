@@ -1,0 +1,13 @@
+Description: Properly quote command line arguments in withsctp
+Author: Mikko Markus Torni <mikko.markus.torni@iki.fi>
+Bug-Debian: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=606322
+Index: lksctp-tools/src/withsctp/withsctp.in
+===================================================================
+--- lksctp-tools.orig/src/withsctp/withsctp.in	2011-03-10 08:03:38.600141002 +0100
++++ lksctp-tools/src/withsctp/withsctp.in	2011-03-10 08:03:41.784141001 +0100
+@@ -9,4 +9,4 @@
+     exit 1;
+ fi
+ 
+-exec $*
++exec "$*"

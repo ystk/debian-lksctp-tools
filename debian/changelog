@@ -1,3 +1,20 @@
+lksctp-tools (1.0.11+dfsg-2) unstable; urgency=low
+
+  * Switch to source format 3.0 (quilt)
+    - Add debian/source/format.
+    - Remove /usr/share/cdbs/1/rules/simple-patchsys.mk from debian/rules.
+  * Bump debhelper compatibility level to 8. Update Build-Depends on debhelper
+    accordingly.
+  * Bump Standards-Version to 3.9.1. No further changes.
+  * Switch from cdbs to dh
+    - Drop Build-Depends on cdbs.
+    - Convert debian/rules to use dh.
+    - Add debian/lksctp-tools.docs to install README and AUTHORS file.
+  * debian/patches/01-withsctp-quote-command-line-args.patch
+    - Properly quote command line arguments in withsctp. (Closes: #606322)
+
+ -- Michael Biebl <biebl@debian.org>  Thu, 10 Mar 2011 08:05:43 +0100
+
 lksctp-tools (1.0.11+dfsg-1) unstable; urgency=low
 
   * New upstream release
