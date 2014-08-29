@@ -413,17 +413,13 @@ my_sctpReadInput(int fd,int maxread)
 	/* receive some number of datagrams and
 	 * act on them.
 	 */
-	struct sctp_sndrcvinfo *s_info;
-	int i,disped;
-
 	struct iovec iov[2];
 	unsigned char from[200];
-	disped = i = 0;
 
 	memset(&msg,0,sizeof(msg));
 	memset(controlVector,0,sizeof(controlVector));
 	memset(readBuffer,0,sizeof(readBuffer));
-	s_info = NULL;
+
 	iov[0].iov_base = readBuffer;
 	iov[0].iov_len = maxread;
 	iov[1].iov_base = NULL;
@@ -436,7 +432,7 @@ my_sctpReadInput(int fd,int maxread)
 	msg.msg_controllen = sizeof(controlVector);
 	errno = 0;
 	sz = recvmsg(fd,&msg,0);
-	printf("Read fd:%d returns %d errno:%d control len is %d msgflg:%x\n",
+	printf("Read fd:%d returns %d errno:%d control len is %zu msgflg:%x\n",
 	       fd,
 	       sz,errno,
 	       msg.msg_controllen,
@@ -456,24 +452,26 @@ int
 poll_fd(int fd)
 {
 	int cameup;
-	int max,notdone;
+	int max;
 	fd_set readfds,writefds,exceptfds;
 	struct timeval tv;
+
 	memset(&tv,0,sizeof(tv));
 	FD_ZERO(&readfds);
 	FD_ZERO(&writefds);
 	FD_ZERO(&exceptfds);
 	cameup = 0;
 	max = fd + 1;
-	notdone = 1;
+
 	printf("poll_fd\n");
 	FD_SET(fd,&readfds);
+
 	select(max,&readfds,&writefds,&exceptfds,NULL);
-	notdone = 0;
 	if(FD_ISSET(fd,&readfds)){
 		printf("Read please\n");
 		cameup += my_sctpReadInput(fd,4100);
 	}
+
 	return(cameup);
 }
 

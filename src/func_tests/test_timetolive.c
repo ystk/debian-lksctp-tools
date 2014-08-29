@@ -64,7 +64,6 @@
 #include <sys/socket.h>
 #include <sys/uio.h>
 #include <netinet/in.h>
-#include <sys/errno.h>
 #include <errno.h>
 #include <netinet/sctp.h>
 #include <sctputil.h>
@@ -101,10 +100,10 @@ int main(int argc, char *argv[])
 	struct sctp_sndrcvinfo *sinfo;
         struct iovec out_iov;
         int error;
-	int pf_class, af_family;
+	int pf_class;
 	uint32_t ppid;
 	uint32_t stream;
-	sctp_assoc_t associd1, associd2;
+	sctp_assoc_t associd1;
 	struct sctp_assoc_change *sac;
 	struct sctp_event_subscribe subscribe;
 	char *big_buffer;
@@ -122,7 +121,6 @@ int main(int argc, char *argv[])
 	/* Set some basic values which depend on the address family. */
 #if TEST_V6
 	pf_class = PF_INET6;
-	af_family = AF_INET6;
 
         loop1.v6.sin6_family = AF_INET6;
         loop1.v6.sin6_addr = in6addr_loopback;
@@ -133,7 +131,6 @@ int main(int argc, char *argv[])
         loop2.v6.sin6_port = htons(SCTP_TESTPORT_2);
 #else
 	pf_class = PF_INET;
-	af_family = AF_INET;
 
         loop1.v4.sin_family = AF_INET;
         loop1.v4.sin_addr.s_addr = SCTP_IP_LOOPBACK;
@@ -175,10 +172,8 @@ int main(int argc, char *argv[])
 	 * This code sets the associations RWND very small so we can
 	 * fill it.  It does this by manipulating the rcvbuf as follows:
 	 * 1) Reduce the rcvbuf size on the socket
-	 * 2) create an association so that we advertize rcvbuf/2 as
+	 * 2) create an association so that we advertise rcvbuf/2 as
 	 *    our initial rwnd
-	 * 3) raise the rcvbuf value so that we don't drop data wile 
-	 *    receiving later data
 	 */
 	len = SMALL_RCVBUF;
 	error = setsockopt(sk2, SOL_SOCKET, SO_RCVBUF, &len,
@@ -228,8 +223,10 @@ int main(int argc, char *argv[])
 	test_check_msg_notification(&inmessage, error,
 				    sizeof(struct sctp_assoc_change),
 				    SCTP_ASSOC_CHANGE, SCTP_COMM_UP);
+#if 0
 	sac = (struct sctp_assoc_change *)iov.iov_base;
 	associd2 = sac->sac_assoc_id;
+#endif
 
         /* Get the communication up message on sk1.  */
         inmessage.msg_controllen = sizeof(incmsg);
@@ -239,14 +236,6 @@ int main(int argc, char *argv[])
 				    SCTP_ASSOC_CHANGE, SCTP_COMM_UP);
 	sac = (struct sctp_assoc_change *)iov.iov_base;
 	associd1 = sac->sac_assoc_id;
-
-	/* restore the rcvbuffer size for the receiving socket */
-	error = setsockopt(sk2, SOL_SOCKET, SO_RCVBUF, &orig_len,
-			   sizeof(orig_len));
-
-	if (error)
-		tst_brkm(TBROK, tst_exit, "setsockopt(SO_RCVBUF): %s",
-			strerror(errno));
 
         /* Get the first data message which was sent.  */
         inmessage.msg_controllen = sizeof(incmsg);

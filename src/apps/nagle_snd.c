@@ -50,7 +50,6 @@
 #include <sys/socket.h>
 #include <sys/uio.h>
 #include <netinet/in.h>
-#include <sys/errno.h>
 #include <errno.h>
 #include <netinet/sctp.h>
 #include <sctputil.h>
@@ -93,8 +92,7 @@ main(int argc, char *argv[])
 	struct sctp_sndrcvinfo *sinfo;
         struct iovec out_iov;
         char *message;
-        int error, bytes_sent;
-	int pf_class, af_family;
+	int error, pf_class;
         sctp_assoc_t associd;
 	uint32_t ppid;
 	uint32_t stream;
@@ -218,8 +216,6 @@ main(int argc, char *argv[])
         target.v6.sin6_port = htons(remote_port);
 
         pf_class = PF_INET6;
-        af_family = AF_INET6;
-
 #else
         hst = gethostbyname(local_host);
         if (hst == NULL || hst->h_length < 1) {
@@ -241,8 +237,6 @@ main(int argc, char *argv[])
         target.v4.sin_port = htons(remote_port);
 
         pf_class = PF_INET;
-        af_family = AF_INET;
-
 #endif /* TEST_V6 */
 
         sk = test_socket(pf_class, SOCK_SEQPACKET, IPPROTO_SCTP);
@@ -292,7 +286,7 @@ main(int argc, char *argv[])
 	       remote_port);
 
         /* Send the first message.  This will create the association.  */
-        bytes_sent = test_sendmsg(sk, &outmessage, 0, size+1);
+        test_sendmsg(sk, &outmessage, 0, size+1);
 
         memset(&inmessage, 0, sizeof(inmessage));	
 	big_buffer = test_malloc(REALLY_BIG);
@@ -351,7 +345,8 @@ main(int argc, char *argv[])
 
 		outmessage.msg_iov->iov_base = message;
 	        outmessage.msg_iov->iov_len = size + 1;
-		bytes_sent = test_sendmsg(sk, &outmessage, 0, size+1);
+
+		test_sendmsg(sk, &outmessage, 0, size+1);
 	}
         
         printf("\n\n\t\tComplete all the data sendings to receiver...\n\n\n");

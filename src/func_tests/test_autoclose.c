@@ -49,7 +49,6 @@
 #include <sys/socket.h>
 #include <sys/uio.h>
 #include <netinet/in.h>
-#include <sys/errno.h>
 #include <errno.h>
 #include <netinet/sctp.h>
 #include <sctputil.h>
@@ -65,7 +64,7 @@ main(int argc, char *argv[])
 	sockaddr_storage_t loop1, loop2;
 	struct msghdr inmessage, outmessage;
 	struct iovec iov, out_iov;
-	int error, bytes_sent;
+	int error;
 	char *big_buffer;
 	char *message = "hello, world!\n";
 	uint32_t autoclose;
@@ -113,7 +112,8 @@ main(int argc, char *argv[])
 	outmessage.msg_iovlen = 1;
 	outmessage.msg_iov->iov_base = message;
 	outmessage.msg_iov->iov_len = strlen(message) + 1;
-	bytes_sent = test_sendmsg(sk1, &outmessage, 0, strlen(message)+1);
+
+	test_sendmsg(sk1, &outmessage, 0, strlen(message)+1);
 
 	/* Initialize inmessage for all receives. */
 	big_buffer = test_malloc(REALLY_BIG);

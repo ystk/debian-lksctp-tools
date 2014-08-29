@@ -54,13 +54,12 @@
 //#define _GNU_SOURCE
 #include <getopt.h>
 #include <netdb.h>
-
+#include <inttypes.h>
 #include <ctype.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
 #include <netinet/in.h>
-#include <sys/errno.h>
 #include <sys/param.h>
 #include <sys/poll.h>
 #include <arpa/inet.h>
@@ -142,7 +141,9 @@ enum inter_cmd_num {
 	INTER_SHUTDOWN,
 	INTER_ABORT,
 	INTER_NODELAY,
-	INTER_MAXSEG
+	INTER_MAXSEG,
+	INTER_HEARTBEAT,
+	INTER_GET_STATS
 };
 
 enum shutdown_type {
@@ -168,6 +169,8 @@ struct inter_entry inter_commands[] = {
 	{"abort", INTER_ABORT},
 	{"nodelay", INTER_NODELAY},
 	{"maxseg", INTER_MAXSEG},
+	{"heartbeat", INTER_HEARTBEAT},
+	{"stats", INTER_GET_STATS},
 	{NULL, -1},
 };
 
@@ -189,9 +192,11 @@ static int bindx_func(char *, int, struct sockaddr *, int, int, int);
 static int connectx_func(char *, int, struct sockaddr *, int);
 static void  primary_func(char *, int, char *, int);
 static void  peer_primary_func(char *, int, char *, int);
+static void  spp_hb_demand_func(char *, int, char *, int);
 static int nodelay_func(char *, int, int val, int set);
 static int maxseg_func(char *, int, int val, int set);
 static int shutdown_func(char *argv0, int *skp, int shutdown_type);
+static int get_assocstats_func(int, sctp_assoc_t);
 static int test_sk_for_assoc(int sk, sctp_assoc_t assoc_id);
 static char * gen_message(int);
 static sctp_assoc_t test_recv_assoc_change(int);
@@ -1372,7 +1377,7 @@ user_test_check_message(struct msghdr *msg,
 
 	if (msg->msg_controllen != controllen) {
 		fprintf(stderr,
-			"Got control structure of length %d, not %d\n",
+			"Got control structure of length %zu, not %d\n",
 			msg->msg_controllen, controllen);
 		exit(1);
 	}
@@ -1462,7 +1467,7 @@ append_addr(const char *parm, struct sockaddr *addrs, int *ret_count)
 	if (NULL != hst4) {
 		for (j = 0; j < i4; ++j) {
 			b4ap = (struct sockaddr_in *)aptr;
-			bzero(b4ap, sizeof(*b4ap));
+			memset(b4ap, 0x00, sizeof(*b4ap));
 			b4ap->sin_family = AF_INET;
 			b4ap->sin_port = htons(local_port);
 			bcopy(hst4->h_addr_list[j], &b4ap->sin_addr,
@@ -1475,7 +1480,7 @@ append_addr(const char *parm, struct sockaddr *addrs, int *ret_count)
 	if (NULL != hst6) {
 		for (j = 0; j < i6; ++j) {
 			b6ap = (struct sockaddr_in6 *)aptr;
-			bzero(b6ap, sizeof(*b6ap));
+			memset(b6ap, 0x00, sizeof(*b6ap));
 			b6ap->sin6_family = AF_INET6;
 			b6ap->sin6_port =  htons(local_port);
 			b6ap->sin6_scope_id = if_index;
@@ -1520,10 +1525,12 @@ parse_inter_commands(char *argv0, char *input, int snd_only)
 		printf("sndbuf=<int>     - Get/Set send buffer size.\n");
 		printf("primary=<addr>   - Get/Set association's primary\n");
 		printf("peer_primary=addr- Set association's peer_primary\n");
+		printf("heartbeat=<addr> - Request a user initiated heartbeat\n");
 		printf("maxseg=<int>     - Get/Set Maximum fragment size.\n");
 		printf("nodelay=<0|1>    - Get/Set NODELAY option.\n");
 		printf("shutdown         - Shutdown the association.\n");
 		printf("abort            - Abort the association.\n");
+		printf("stats            - Print GET_ASSOC_STATS (if available in kernel).\n");
 		printf("?                - Help. Display this message.\n");
 		return -1;
 	}
@@ -1600,6 +1607,9 @@ parse_inter_commands(char *argv0, char *input, int snd_only)
 			case INTER_SET_PEER_PRIM:
 				peer_primary_func(argv0, inter_sk, p, set);
 				break;
+			case INTER_HEARTBEAT:
+				spp_hb_demand_func(argv0, inter_sk, p, set);
+				break;
 			case INTER_SHUTDOWN:
 				shutdown_func(argv0, &inter_sk, SHUTDOWN_SHUTDOWN);
 				break;
@@ -1623,6 +1633,9 @@ parse_inter_commands(char *argv0, char *input, int snd_only)
 				}
 				val = (set) ? atoi(p) : 0;
 				maxseg_func(argv0, inter_sk, val, set);
+				break;
+			case INTER_GET_STATS:
+				get_assocstats_func(inter_sk, associd);
 				break;
 			default:
 				goto err_input;
@@ -1946,14 +1959,13 @@ peer_primary_func(char *argv0, int sk, char *cp, int set)
 	struct sctp_setpeerprim setpeerprim;
 	struct sockaddr_in *in_addr;
 	struct sockaddr_in6 *in6_addr;
-	int peer_prim_len, ret;
+	int ret;
 	char *p = cp;
 
 	if (!set) {
 		goto err;
 	}
 
-	peer_prim_len = sizeof(struct sctp_setpeerprim);
 	/* Set the buffer for address parsing.  */
 	while ('\n' != *p)
 		p++;
@@ -1987,6 +1999,56 @@ err:
 	if (!errno)
 		errno = EINVAL;
 	fprintf(stderr, "%s: error %s peer_primary: %s.\n", argv0,
+	        (set)?"setting":"getting", strerror(errno));
+}
+
+static void
+spp_hb_demand_func(char *argv0, int sk, char *cp, int set)
+{
+	struct sctp_paddrparams params;
+	struct sockaddr_in *in_addr;
+	struct sockaddr_in6 *in6_addr;
+	int ret;
+	char *p = cp;
+
+	memset(&params, 0, sizeof(struct sctp_paddrparams));
+	params.spp_assoc_id = associd;
+	params.spp_flags = SPP_HB_DEMAND;
+
+	if (set) {
+		/* Set the buffer for address parsing.  */
+		while ('\n' != *p)
+			p++;
+		*p = '\0';
+
+		if (strchr(cp, '.')) {
+			in_addr = (struct sockaddr_in *)&params.spp_address;
+			in_addr->sin_port = htons(remote_port);
+			in_addr->sin_family = AF_INET;
+			ret = inet_pton(AF_INET, cp, &in_addr->sin_addr);
+			if (ret <= 0)
+				goto err;
+		} else if (strchr(cp, ':')) {
+			in6_addr = (struct sockaddr_in6 *)&params.spp_address;
+			in6_addr->sin6_port = htons(remote_port);
+			in6_addr->sin6_family = AF_INET6;
+			ret = inet_pton(AF_INET6, cp, &in6_addr->sin6_addr);
+			if (ret <= 0)
+				goto err;
+		} else
+			goto err;
+	}
+
+	ret = setsockopt(sk, IPPROTO_SCTP, SCTP_PEER_ADDR_PARAMS,
+			    &params, sizeof(struct sctp_paddrparams));
+	if (ret < 0)
+		goto err;
+
+	return;
+err:
+	if (!errno)
+		errno = EINVAL;
+	fprintf(stderr, "%s: error %s peer_addr_params: %s.\n", argv0,
 	        (set)?"setting":"getting", strerror(errno));
 }
 
@@ -2169,6 +2231,49 @@ shutdown_func(char *argv0, int *skp, int shutdown_type)
 		printf("%s failed\n", sd_type);
 		exit(1);
 	}
+
+	return 0;
+}
+
+static int
+get_assocstats_func(int sk, sctp_assoc_t assoc_id)
+{
+	int error = 0;
+	struct sctp_assoc_stats stats;
+	socklen_t len;
+
+	if (assoc_id == 0) {
+		printf("No association present yet\n");
+		return -1;
+	}
+
+	memset(&stats, 0, sizeof(struct sctp_assoc_stats));
+	stats.sas_assoc_id = assoc_id;
+	len = sizeof(struct sctp_assoc_stats);
+	error = getsockopt(sk, SOL_SCTP, SCTP_GET_ASSOC_STATS,
+			(char *)&stats, &len);
+	if (error != 0) {
+		printf("get_assoc_stats() failed %s\n", strerror(errno));
+		return error;
+	}
+
+	printf("Retransmitted Chunks: %" PRIu64 "\n", (uint64_t) stats.sas_rtxchunks);
+	printf("Gap Acknowledgements Received: %" PRIu64 "\n", (uint64_t) stats.sas_gapcnt);
+	printf("TSN received > next expected: %" PRIu64 "\n", (uint64_t) stats.sas_outofseqtsns);
+	printf("SACKs sent: %" PRIu64 "\n", (uint64_t) stats.sas_osacks);
+	printf("SACKs received: %" PRIu64 "\n", (uint64_t) stats.sas_isacks);
+	printf("Control chunks sent: %" PRIu64 "\n", (uint64_t) stats.sas_octrlchunks);
+	printf("Control chunks received: %" PRIu64 "\n", (uint64_t) stats.sas_ictrlchunks);
+	printf("Ordered data chunks sent: %" PRIu64 "\n", (uint64_t) stats.sas_oodchunks);
+	printf("Ordered data chunks received: %" PRIu64 "\n", (uint64_t) stats.sas_iodchunks);
+	printf("Unordered data chunks sent: %" PRIu64 "\n", (uint64_t) stats.sas_ouodchunks);
+	printf("Unordered data chunks received: %" PRIu64 "\n", (uint64_t) stats.sas_iuodchunks);
+	printf("Dups received (ordered+unordered): %" PRIu64 "\n", (uint64_t) stats.sas_idupchunks);
+	printf("Packets sent: %" PRIu64 "\n", (uint64_t) stats.sas_opackets);
+	printf("Packets received: %" PRIu64 "\n", (uint64_t) stats.sas_ipackets);
+	printf("Maximum Observed RTO this period: %" PRIu64 " - Transport: ", (uint64_t) stats.sas_maxrto);
+	print_sockaddr((struct sockaddr *)&stats.sas_obs_rto_ipaddr);
+	printf("\n");
 
 	return 0;
 }
