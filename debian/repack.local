@@ -1,0 +1,2 @@
+rm doc/rfc*
+rm doc/draft-*

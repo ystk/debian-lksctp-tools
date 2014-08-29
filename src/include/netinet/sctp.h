@@ -62,94 +62,53 @@ typedef __s32 sctp_assoc_t;
 /* The following symbols come from the Sockets API Extensions for
  * SCTP <draft-ietf-tsvwg-sctpsocket-07.txt>.
  */
-enum sctp_optname {
-	SCTP_RTOINFO,
-#define SCTP_RTOINFO SCTP_RTOINFO
-	SCTP_ASSOCINFO,
-#define SCTP_ASSOCINFO SCTP_ASSOCINFO
-	SCTP_INITMSG,
-#define SCTP_INITMSG SCTP_INITMSG
-	SCTP_NODELAY, 	/* Get/set nodelay option. */
-#define SCTP_NODELAY	SCTP_NODELAY
-	SCTP_AUTOCLOSE,
-#define SCTP_AUTOCLOSE SCTP_AUTOCLOSE
-	SCTP_SET_PEER_PRIMARY_ADDR, 
-#define SCTP_SET_PEER_PRIMARY_ADDR SCTP_SET_PEER_PRIMARY_ADDR
-	SCTP_PRIMARY_ADDR,
-#define SCTP_PRIMARY_ADDR SCTP_PRIMARY_ADDR
-	SCTP_ADAPTATION_LAYER,
-#define SCTP_ADAPTATION_LAYER SCTP_ADAPTATION_LAYER
-	SCTP_DISABLE_FRAGMENTS,
-#define SCTP_DISABLE_FRAGMENTS SCTP_DISABLE_FRAGMENTS
-	SCTP_PEER_ADDR_PARAMS,
-#define SCTP_PEER_ADDR_PARAMS SCTP_PEER_ADDR_PARAMS
-	SCTP_DEFAULT_SEND_PARAM,
-#define SCTP_DEFAULT_SEND_PARAM SCTP_DEFAULT_SEND_PARAM
-	SCTP_EVENTS,
-#define SCTP_EVENTS SCTP_EVENTS
-	SCTP_I_WANT_MAPPED_V4_ADDR,  /* Turn on/off mapped v4 addresses  */
-#define SCTP_I_WANT_MAPPED_V4_ADDR SCTP_I_WANT_MAPPED_V4_ADDR
-	SCTP_MAXSEG, 	/* Get/set maximum fragment. */
-#define SCTP_MAXSEG 	SCTP_MAXSEG
-	SCTP_STATUS,
-#define SCTP_STATUS SCTP_STATUS
-	SCTP_GET_PEER_ADDR_INFO,
-#define SCTP_GET_PEER_ADDR_INFO SCTP_GET_PEER_ADDR_INFO
-	SCTP_DELAYED_ACK,
-#define SCTP_DELAYED_ACK_TIME SCTP_DELAYED_ACK
-#define SCTP_DELAYED_ACK SCTP_DELAYED_ACK
-	SCTP_CONTEXT,	/* Receive Context */
-#define SCTP_CONTEXT SCTP_CONTEXT
-	SCTP_FRAGMENT_INTERLEAVE,
-#define SCTP_FRAGMENT_INTERLEAVE SCTP_FRAGMENT_INTERLEAVE
-	SCTP_PARTIAL_DELIVERY_POINT,	/* Set/Get partial delivery point */
-#define SCTP_PARTIAL_DELIVERY_POINT SCTP_PARTIAL_DELIVERY_POINT
-	SCTP_MAX_BURST,		/* Set/Get max burst */
-#define SCTP_MAX_BURST SCTP_MAX_BURST
-	SCTP_AUTH_CHUNK,	/* Set only: add a chunk type to authenticat */
-#define SCTP_AUTH_CHUNK SCTP_AUTH_CHUNK
-	SCTP_HMAC_IDENT,
-#define SCTP_HMAC_IDENT SCTP_HMAC_IDENT
-	SCTP_AUTH_KEY,
-#define SCTP_AUTH_KEY SCTP_AUTH_KEY
-	SCTP_AUTH_ACTIVE_KEY,
-#define SCTP_AUTH_ACTIVE_KEY SCTP_AUTH_ACTIVE_KEY
-	SCTP_AUTH_DELETE_KEY,
-#define SCTP_AUTH_DELETE_KEY SCTP_AUTH_DELETE_KEY
-	SCTP_PEER_AUTH_CHUNKS,		/* Read only */
-#define SCTP_PEER_AUTH_CHUNKS SCTP_PEER_AUTH_CHUNKS
-	SCTP_LOCAL_AUTH_CHUNKS,		/* Read only */
-#define SCTP_LOCAL_AUTH_CHUNKS SCTP_LOCAL_AUTH_CHUNKS
-	SCTP_GET_ASSOC_NUMBER,		/* Read only */
-#define SCTP_GET_ASSOC_NUMBER SCTP_GET_ASSOC_NUMBER
+#define SCTP_RTOINFO	0
+#define SCTP_ASSOCINFO  1
+#define SCTP_INITMSG	2
+#define SCTP_NODELAY	3		/* Get/set nodelay option. */
+#define SCTP_AUTOCLOSE	4
+#define SCTP_SET_PEER_PRIMARY_ADDR 5
+#define SCTP_PRIMARY_ADDR	6
+#define SCTP_ADAPTATION_LAYER	7
+#define SCTP_DISABLE_FRAGMENTS	8
+#define SCTP_PEER_ADDR_PARAMS	9
+#define SCTP_DEFAULT_SEND_PARAM	10
+#define SCTP_EVENTS	11
+#define SCTP_I_WANT_MAPPED_V4_ADDR 12	/* Turn on/off mapped v4 addresses  */
+#define SCTP_MAXSEG	13		/* Get/set maximum fragment. */
+#define SCTP_STATUS	14
+#define SCTP_GET_PEER_ADDR_INFO	15
+#define SCTP_DELAYED_ACK_TIME	16
+#define SCTP_DELAYED_ACK SCTP_DELAYED_ACK_TIME
+#define SCTP_DELAYED_SACK SCTP_DELAYED_ACK_TIME
+#define SCTP_CONTEXT	17
+#define SCTP_FRAGMENT_INTERLEAVE	18
+#define SCTP_PARTIAL_DELIVERY_POINT	19 /* Set/Get partial delivery point */
+#define SCTP_MAX_BURST	20		/* Set/Get max burst */
+#define SCTP_AUTH_CHUNK	21	/* Set only: add a chunk type to authenticate */
+#define SCTP_HMAC_IDENT	22
+#define SCTP_AUTH_KEY	23
+#define SCTP_AUTH_ACTIVE_KEY	24
+#define SCTP_AUTH_DELETE_KEY	25
+#define SCTP_PEER_AUTH_CHUNKS	26	/* Read only */
+#define SCTP_LOCAL_AUTH_CHUNKS	27	/* Read only */
+#define SCTP_GET_ASSOC_NUMBER	28	/* Read only */
 
+/* Internal Socket Options. Some of the sctp library functions are
+ * implemented using these socket options.
+ */
+#define SCTP_SOCKOPT_BINDX_ADD	100	/* BINDX requests for adding addrs */
+#define SCTP_SOCKOPT_BINDX_REM	101	/* BINDX requests for removing addrs. */
+#define SCTP_SOCKOPT_PEELOFF	102	/* peel off association. */
+/* Options 104-106 are deprecated and removed. Do not use this space */
+#define SCTP_SOCKOPT_CONNECTX_OLD	107	/* CONNECTX old requests. */
+#define SCTP_GET_PEER_ADDRS	108		/* Get all peer addresss. */
+#define SCTP_GET_LOCAL_ADDRS	109		/* Get all local addresss. */
+#define SCTP_SOCKOPT_CONNECTX	110		/* CONNECTX requests. */
+#define SCTP_SOCKOPT_CONNECTX3	111	/* CONNECTX requests (updated) */
 
-	/* Internal Socket Options. Some of the sctp library functions are 
-	 * implemented using these socket options.
-	 */
-	SCTP_SOCKOPT_BINDX_ADD = 100,/* BINDX requests for adding addresses. */
-#define SCTP_SOCKOPT_BINDX_ADD	SCTP_SOCKOPT_BINDX_ADD
-	SCTP_SOCKOPT_BINDX_REM, /* BINDX requests for removing addresses. */
-#define SCTP_SOCKOPT_BINDX_REM	SCTP_SOCKOPT_BINDX_REM
-	SCTP_SOCKOPT_PEELOFF, 	/* peel off association. */
-#define SCTP_SOCKOPT_PEELOFF	SCTP_SOCKOPT_PEELOFF
-	SCTP_GET_PEER_ADDRS_NUM_OLD, 	/* Get number of peer addresss. */
-#define SCTP_GET_PEER_ADDRS_NUM_OLD	SCTP_GET_PEER_ADDRS_NUM_OLD
-	SCTP_GET_PEER_ADDRS_OLD, 	/* Get all peer addresss. */
-#define SCTP_GET_PEER_ADDRS_OLD	SCTP_GET_PEER_ADDRS_OLD
-	SCTP_GET_LOCAL_ADDRS_NUM_OLD, 	/* Get number of local addresss. */
-#define SCTP_GET_LOCAL_ADDRS_NUM_OLD	SCTP_GET_LOCAL_ADDRS_NUM_OLD
-	SCTP_GET_LOCAL_ADDRS_OLD, 	/* Get all local addresss. */
-#define SCTP_GET_LOCAL_ADDRS_OLD	SCTP_GET_LOCAL_ADDRS_OLD
-	SCTP_SOCKOPT_CONNECTX_OLD, /* CONNECTX requests. OLD implementation */
-#define SCTP_SOCKOPT_CONNECTX_OLD	SCTP_SOCKOPT_CONNECTX_OLD
-	SCTP_GET_PEER_ADDRS, 	/* Get all peer addresss. */
-#define SCTP_GET_PEER_ADDRS	SCTP_GET_PEER_ADDRS
-	SCTP_GET_LOCAL_ADDRS, 	/* Get all local addresss. */
-#define SCTP_GET_LOCAL_ADDRS	SCTP_GET_LOCAL_ADDRS
-	SCTP_SOCKOPT_CONNECTX, /* CONNECTX requests. NEW implementation */
-#define SCTP_SOCKOPT_CONNECTX	SCTP_SOCKOPT_CONNECTX
-};
+/* SCTP socket option used to read per endpoint association statistics. */
+#define SCTP_GET_ASSOC_STATS    112      /* Read only */
 
 /*
  * 5.2.1 SCTP Initiation Structure (SCTP_INIT)
@@ -206,6 +165,7 @@ enum sctp_sinfo_flags {
 	SCTP_UNORDERED = 1,  /* Send/receive message unordered. */
 	SCTP_ADDR_OVER = 2,  /* Override the primary destination. */
 	SCTP_ABORT=4,        /* Send an ABORT message to the peer. */
+	SCTP_SACK_IMMEDIATELY = 8,      /* SACK should be sent without delay */
 	SCTP_EOF=MSG_FIN,    /* Initiate graceful shutdown process. */
 };
 
@@ -413,6 +373,12 @@ struct sctp_authkey_event {
 
 enum { SCTP_AUTH_NEWKEY = 0, };
 
+struct sctp_sender_dry_event {
+       __u16 sender_dry_type;
+       __u16 sender_dry_flags;
+       __u32 sender_dry_length;
+       sctp_assoc_t sender_dry_assoc_id;
+};
 
 /*
  * Described in Section 7.3
@@ -428,6 +394,7 @@ struct sctp_event_subscribe {
 	__u8 sctp_partial_delivery_event;
 	__u8 sctp_adaptation_layer_event;
 	__u8 sctp_authentication_event;
+	__u8 sctp_sender_dry_event;
 };
 
 /*
@@ -451,6 +418,7 @@ union sctp_notification {
 	struct sctp_adaptation_event sn_adaptation_event;
 	struct sctp_pdapi_event sn_pdapi_event;
 	struct sctp_authkey_event sn_authkey_event;
+	struct sctp_sender_dry_event sn_sender_dry_event;
 };
 
 /* Section 5.3.1
@@ -461,13 +429,23 @@ union sctp_notification {
 enum sctp_sn_type {
 	SCTP_SN_TYPE_BASE     = (1<<15),
 	SCTP_ASSOC_CHANGE,
+#define SCTP_ASSOC_CHANGE SCTP_ASSOC_CHANGE
 	SCTP_PEER_ADDR_CHANGE,
+#define SCTP_PEER_ADDR_CHANGE SCTP_PEER_ADDR_CHANGE
 	SCTP_SEND_FAILED,
+#define SCTP_SEND_FAILED SCTP_SEND_FAILED
 	SCTP_REMOTE_ERROR,
+#define SCTP_REMOTE_ERROR SCTP_REMOTE_ERROR
 	SCTP_SHUTDOWN_EVENT,
+#define SCTP_SHUTDOWN_EVENT SCTP_SHUTDOWN_EVENT
 	SCTP_PARTIAL_DELIVERY_EVENT,
+#define SCTP_PARTIAL_DELIVERY_EVENT SCTP_PARTIAL_DELIVERY_EVENT
 	SCTP_ADAPTATION_INDICATION,
+#define SCTP_ADAPTATION_INDICATION SCTP_ADAPTATION_INDICATION
 	SCTP_AUTHENTICATION_INDICATION,
+#define SCTP_AUTHENTICATION_INDICATION SCTP_AUTHENTICATION_INDICATION
+	SCTP_SENDER_DRY_EVENT,
+#define SCTP_SENDER_DRY_EVENT SCTP_SENDER_DRY_EVENT
 };
 
 /* Notification error codes used to fill up the error fields in some
@@ -698,8 +676,10 @@ struct sctp_paddrinfo {
  */
 enum sctp_spinfo_state {
 	SCTP_INACTIVE,
+	SCTP_PF,
 	SCTP_ACTIVE,
-	SCTP_UNCONFIRMED
+	SCTP_UNCONFIRMED,
+	SCTP_UNKNOWN = 0xffff
 };
 
 /*
@@ -768,6 +748,32 @@ struct sctp_getaddrs {
 	sctp_assoc_t		assoc_id; /*input*/
 	__u32			addr_num; /*output*/
 	__u8			addrs[0]; /*output, variable size*/
+};
+
+/* A socket user request obtained via SCTP_GET_ASSOC_STATS that retrieves
+ * association stats. All stats are counts except sas_maxrto and
+ * sas_obs_rto_ipaddr. maxrto is the max observed rto + transport since
+ * the last call. Will return 0 when did not change since last call
+ */
+struct sctp_assoc_stats {
+	sctp_assoc_t	sas_assoc_id;    /* Input */
+					 /* Transport of the observed max RTO spike */
+	struct sockaddr_storage sas_obs_rto_ipaddr;
+	__u64		sas_maxrto;      /* Maximum Observed RTO for period */
+	__u64		sas_isacks;	 /* SACKs received */
+	__u64		sas_osacks;	 /* SACKs sent */
+	__u64		sas_opackets;	 /* Packets sent */
+	__u64		sas_ipackets;	 /* Packets received */
+	__u64		sas_rtxchunks;   /* Retransmitted Chunks */
+	__u64		sas_outofseqtsns;/* TSN received > next expected */
+	__u64		sas_idupchunks;  /* Dups received (ordered+unordered) */
+	__u64		sas_gapcnt;      /* Gap Acknowledgements Received */
+	__u64		sas_ouodchunks;  /* Unordered data chunks sent */
+	__u64		sas_iuodchunks;  /* Unordered data chunks received */
+	__u64		sas_oodchunks;	 /* Ordered data chunks sent */
+	__u64		sas_iodchunks;	 /* Ordered data chunks received */
+	__u64		sas_octrlchunks; /* Control chunks sent */
+	__u64		sas_ictrlchunks; /* Control chunks received */
 };
 
 /* These are bit fields for msghdr->msg_flags.  See section 5.1.  */

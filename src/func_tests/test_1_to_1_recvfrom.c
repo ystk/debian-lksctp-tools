@@ -63,12 +63,14 @@ int TST_CNT = 0;
 int
 main(int argc, char *argv[])
 {
-        int ret, msg_count;
+        int msg_count;
 	socklen_t len;
 	int sk,pf_class,lstn_sk,acpt_sk, flag;
         char *message = "hello, world!\n";
 	char *message_rcv;
         int count;
+	int fd, err_no = 0;
+	char filename[21];
 
         struct sockaddr_in conn_addr,lstn_addr,svr_addr;
 
@@ -122,11 +124,20 @@ main(int argc, char *argv[])
 	tst_resm(TPASS, "recvfrom() with a bad socket descriptor - EBADF");
 
 	/*recvfrom () TEST2: Invalid socket , ENOTSOCK Expected error*/
-	count = recvfrom(0, message_rcv, msg_count, flag,
+	strcpy(filename, "/tmp/sctptest.XXXXXX");
+	fd = mkstemp(filename);
+	if (fd == -1)
+		tst_brkm(TBROK, tst_exit, "Failed to mkstemp %s: %s",
+				filename, strerror(errno));
+	count = recvfrom(fd, message_rcv, msg_count, flag,
 			 (struct sockaddr *)&svr_addr, &len);
-	if (count != -1 || errno != ENOTSOCK)
+	if (count == -1)
+		err_no = errno;
+	close(fd);
+	unlink(filename);
+	if (count != -1 || err_no != ENOTSOCK)
 		tst_brkm(TBROK, tst_exit, "recvfrom with invalid socket "
-			 "count:%d, errno:%d", count, errno);
+			 "count:%d, errno:%d", count, err_no);
 
 	tst_resm(TPASS, "recvfrom() with invalid socket - ENOTSOCK");
 
@@ -150,7 +161,7 @@ main(int argc, char *argv[])
 
 	count = test_send(acpt_sk, message, msg_count, flag);
 
-	ret = test_shutdown(sk, SHUT_WR);
+	test_shutdown(sk, SHUT_WR);
 
 	/*recvfrom () TEST5:reading on a socket that received SHUTDOWN*/
 	count = recvfrom(acpt_sk, message_rcv, msg_count, flag,

@@ -50,7 +50,6 @@
 #include <sys/socket.h>
 #include <sys/uio.h>
 #include <netinet/in.h>
-#include <sys/errno.h>
 #include <errno.h>
 #include <netinet/sctp.h>
 #include <sctputil.h>
@@ -77,7 +76,7 @@ int main(int argc, char *argv[])
 	sockaddr_storage_t loop2;
 	sockaddr_storage_t msgname;
 	int error;
-	int pf_class, af_family;
+	int pf_class;
 	uint32_t ppid;
 	uint32_t stream;
 	struct sctp_event_subscribe subscribe;
@@ -88,7 +87,7 @@ int main(int argc, char *argv[])
 	struct sctp_send_failed *ssf;
 	struct sctp_sndrcvinfo sinfo;
 	struct sctp_sndrcvinfo snd_sinfo;
-	sctp_assoc_t associd1, associd2;
+	sctp_assoc_t associd1;
 	socklen_t len, oldlen;
 	struct sctp_status gstatus;
 
@@ -100,7 +99,6 @@ int main(int argc, char *argv[])
 	/* Set some basic values which depend on the address family. */
 #if TEST_V6
 	pf_class = PF_INET6;
-	af_family = AF_INET6;
 
 	loop1.v6.sin6_family = AF_INET6;
 	loop1.v6.sin6_addr = in6addr_loopback;
@@ -111,7 +109,6 @@ int main(int argc, char *argv[])
 	loop2.v6.sin6_port = htons(SCTP_TESTPORT_2);
 #else
 	pf_class = PF_INET;
-	af_family = AF_INET;
 
 	loop1.v4.sin_family = AF_INET;
 	loop1.v4.sin_addr.s_addr = SCTP_IP_LOOPBACK;
@@ -145,7 +142,6 @@ int main(int argc, char *argv[])
 
 	/*
 	 * Set the RWND small so we can fill it up easily.
-	 * then reset RCVBUF to avoid frame droppage
 	 */
 	len = sizeof(int);
 	error = getsockopt(sk2, SOL_SOCKET, SO_RCVBUF, &oldlen, &len);
@@ -177,26 +173,22 @@ int main(int argc, char *argv[])
 	buflen = REALLY_BIG;
 	big_buffer = test_malloc(buflen);
 	msgname_len = sizeof(msgname);
+	msg_flags = 0;
 	error = test_sctp_recvmsg(sk2, big_buffer, buflen,
 				  (struct sockaddr *)&msgname, &msgname_len,
-				  &sinfo, &msg_flags); 
+				  &sinfo, &msg_flags);
+#if 0
 	associd2 = ((struct sctp_assoc_change *)big_buffer)->sac_assoc_id;
+#endif
 	test_check_buf_notification(big_buffer, error, msg_flags,
 				    sizeof(struct sctp_assoc_change),
 				    SCTP_ASSOC_CHANGE, SCTP_COMM_UP);
 
 
-	/* restore the rcvbuffer size for the receiving socket */
-	error = setsockopt(sk2, SOL_SOCKET, SO_RCVBUF, &oldlen,
-			   sizeof(oldlen));
-
-	if (error)
-		tst_brkm(TBROK, tst_exit, "setsockopt(SO_RCVBUF): %s",
-			 strerror(errno));
-
 	/* Get the communication up message on sk1.  */
 	buflen = REALLY_BIG;
 	msgname_len = sizeof(msgname);
+	msg_flags = 0;
 	error = test_sctp_recvmsg(sk1, big_buffer, buflen,
 				  (struct sockaddr *)&msgname, &msgname_len,
 				  &sinfo, &msg_flags); 
@@ -210,6 +202,7 @@ int main(int argc, char *argv[])
 	/* Get the first message which was sent.  */
 	buflen = REALLY_BIG;
 	msgname_len = sizeof(msgname);
+	msg_flags = 0;
 	error = test_sctp_recvmsg(sk2, big_buffer, buflen,
 				  (struct sockaddr *)&msgname, &msgname_len,
 				  &sinfo, &msg_flags); 
@@ -271,6 +264,7 @@ int main(int argc, char *argv[])
 	do {
 		buflen = REALLY_BIG;
 		msgname_len = sizeof(msgname);
+		msg_flags = 0;
 		test_sctp_recvmsg(sk2, big_buffer, buflen,
 			  (struct sockaddr *)&msgname, &msgname_len,
 			  &sinfo, &msg_flags); 
@@ -279,6 +273,7 @@ int main(int argc, char *argv[])
 	/* Get the message that did NOT time out. */
 	buflen = REALLY_BIG;
 	msgname_len = sizeof(msgname);
+	msg_flags = 0;
 	error = test_sctp_recvmsg(sk2, big_buffer, buflen,
 			  (struct sockaddr *)&msgname, &msgname_len,
 			  &sinfo, &msg_flags); 
@@ -294,6 +289,7 @@ int main(int argc, char *argv[])
 	 */
 	buflen = REALLY_BIG;
 	msgname_len = sizeof(msgname);
+	msg_flags = 0;
 	error = test_sctp_recvmsg(sk1, big_buffer, buflen,
 			  (struct sockaddr *)&msgname, &msgname_len,
 			  &sinfo, &msg_flags); 
@@ -315,6 +311,7 @@ int main(int argc, char *argv[])
 	do {
 		buflen = REALLY_BIG;
 		msgname_len = sizeof(msgname);
+		msg_flags = 0;
 		error = test_sctp_recvmsg(sk1, big_buffer, buflen,
 			  (struct sockaddr *)&msgname, &msgname_len,
 			  &sinfo, &msg_flags); 
@@ -342,6 +339,7 @@ int main(int argc, char *argv[])
 
 	buflen = REALLY_BIG;
 	msgname_len = sizeof(msgname);
+	msg_flags = 0;
 	error = test_sctp_recvmsg(sk2, big_buffer, buflen,
 				  (struct sockaddr *)&msgname, &msgname_len,
 				  &sinfo, &msg_flags); 
@@ -357,6 +355,7 @@ int main(int argc, char *argv[])
 	/* Get the shutdown complete notification. */
 	buflen = REALLY_BIG;
 	msgname_len = sizeof(msgname);
+	msg_flags = 0;
 	error = test_sctp_recvmsg(sk2, big_buffer, buflen,
 		  (struct sockaddr *)&msgname, &msgname_len,
 		  &sinfo, &msg_flags); 

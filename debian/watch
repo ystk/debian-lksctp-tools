@@ -1,4 +1,4 @@
 version=3
 opts="dversionmangle=s/\+dfsg//" \
-http://sf.net/lksctp/lksctp-tools-([\d\.]+)\.tar\.gz
-
+http://sf.net/lksctp/lksctp-tools-([\d\.]+)\.tar\.gz \
+debian sh debian/repack.stub

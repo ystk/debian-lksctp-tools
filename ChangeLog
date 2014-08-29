@@ -1,8 +1,42 @@
-Version 2.6.28-1.0.11 of the Developers' Release of the SCTP
+Version 1.0.16 of the Developers' Release of the SCTP
 Linux Kernel Implementation is available from
 
         http://www.kernel.org
 
+lksctp-1.0.16: Tue Feb 18 11:01 EDT 2014
+T:APP         Code cleanups
+T:APP         Various sctp_status fixes
+T:TEST        Avoid using file descriptor 0 to get ENOTSOCK
+T:TEST        Various fixes
+T:LIB         Fix build for prefixed architectures
+
+lksctp-1.0.15: Sun May 12 11:01 EDT 2013
+T:BUILD       Allow build with no AM_SILENT_RULES support
+T:APP         Fix sctp_status
+T:APP         Fix quoted command line arguments
+
+lksctp-1.0.14: Wed Apr 05 11:54 EDT 2013
+T:BUILD       Modernize and fix autotool's build system
+T:TEST        Fix threading test
+T:TEST        Zero out flags in sendrecvmsg test
+T:HDR         Sync header with the kernel
+
+lksctp-1.0.13: Wed Jan 23 12:13 EDT 2013
+T:BUILD       Use silent rules
+T:BUILD       Fix build warnings all over the place
+T:APP         Fix memory leak in sctp_xconnect
+T:TEST        Fix deprecated values in test cases
+
+lksctp-1.0.12: Tue Jan 08 10:45 EDT 2013
+T:API         Add needed definitions for DTLS/SCTP.
+T:API         Fix data corruption in sctp_send
+T:API         Implement private SCTP_GET_ASSOC_STATS option to fetch addition
+              association data.
+T:TEST        Add more options to conformace test tool.
+T:APP         Add HEARTBEAT command to sctp_darn
+T:API         Obsolete interefaces have been removed
+T:API         Suport for SCTP_SACK_IMMEDIATELY options
+T:API         Support for non-blocking sctp-connectx
 
 lksctp-2.6.28-1.0.11: Wed Oct 21 16:53:41 EDT 2009
 T:BUILD       fix parallel build warning
@@ -27,6 +61,7 @@ T:API         Update to the sctp_connectx().  Now takes additional argument.
 T:API         Let sctp_recvmsg() honor passed in MSG_ flags
 K:	      See kernel change log for details.  We'll track only tools
               changes here from now on.
+
 lksctp-2.6.26-1.0.9: Sun Jul 13 14:51:29 PDT 2008
 T:Patch	      Make frame tests work with 2.6.26 kernel.
 T:Patch       Implement and export SCTP-AUTH API extensions based on

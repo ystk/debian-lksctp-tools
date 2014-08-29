@@ -1,5 +1,6 @@
-debian/tmp/usr/lib/*.so
-debian/tmp/usr/lib/*.a
-debian/tmp/usr/lib/*.la
-debian/tmp/usr/include/netinet/sctp.h
-debian/tmp/usr/share/lksctp-tools/* usr/share/doc/libsctp-dev/examples/
+usr/lib/*/*.so
+usr/lib/*/*.a
+usr/include/netinet/sctp.h
+usr/share/lksctp-tools/* usr/share/doc/libsctp-dev/examples/
+usr/share/man/man7/*
+usr/share/man/man3/*

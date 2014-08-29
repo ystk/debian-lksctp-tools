@@ -1,3 +1,66 @@
+lksctp-tools (1.0.16+dfsg-2) unstable; urgency=medium
+
+  * Mark binary packages as linux-any.
+    lksctp-tools is Linux specific and FTBFS on kFreeBSD and GNU/Hurd.
+
+ -- Michael Biebl <biebl@debian.org>  Sun, 13 Apr 2014 10:07:50 +0200
+
+lksctp-tools (1.0.16+dfsg-1) unstable; urgency=medium
+
+  * New upstream release.
+  * Bump Standards-Version to 3.9.5. No further changes.
+
+ -- Michael Biebl <biebl@debian.org>  Fri, 28 Feb 2014 18:08:35 +0100
+
+lksctp-tools (1.0.15+dfsg-1) unstable; urgency=low
+
+  * New upstream release.
+  * Remove 01-withsctp-quote-command-line-args.patch, merged upstream.
+
+ -- Michael Biebl <biebl@debian.org>  Sun, 12 May 2013 23:32:14 +0200
+
+lksctp-tools (1.0.14+dfsg-3) unstable; urgency=low
+
+  * Upload to unstable.
+
+ -- Michael Biebl <biebl@debian.org>  Sun, 05 May 2013 08:45:31 +0200
+
+lksctp-tools (1.0.14+dfsg-2) experimental; urgency=low
+
+  * Cherry-pick patch from upstream Git to properly fix quoted command line
+    arguments in withsctp. (Closes: #705171)
+
+ -- Michael Biebl <biebl@debian.org>  Thu, 11 Apr 2013 17:32:42 +0200
+
+lksctp-tools (1.0.14+dfsg-1) experimental; urgency=low
+
+  * New upstream release.
+  * Use the bootstrap script provided by upstream when running dh_autoreconf.
+
+ -- Michael Biebl <biebl@debian.org>  Wed, 10 Apr 2013 14:00:59 +0200
+
+lksctp-tools (1.0.13+dfsg-1) experimental; urgency=low
+
+  * New upstream release.
+  * Move packaging to collab-maint using git and git-puildpackage.
+  * Add Vcs-* headers accordingly.
+  * Use pristine-tar with git-buildpackage.
+  * Use repack script from pkg-perl to automatically remove the non-free rfc
+    documents. See http://pkg-perl.alioth.debian.org/howto/repacking.html.
+  * Generate build system using dh-autoreconf.
+  * Update symbols file for libsctp1.
+  * Strip debian/tmp/ from .install files.
+  * Fold libsctp-dev.manpages into libsctp-dev.install.
+  * Use dh_install --list-missing to show uninstalled files.
+  * Stop installing libtool .la files.
+  * Bump debhelper compatibility level to 9 which enables multi-arch in dh.
+  * Install library files from multi-arch paths and mark libsctp1 as
+    Multi-Arch: same.
+  * Rewrite copyright file using the machine-readable copyright format 1.0.
+  * Bump Standards-Version to 3.9.4.
+
+ -- Michael Biebl <biebl@debian.org>  Fri, 15 Feb 2013 05:18:14 +0100
+
 lksctp-tools (1.0.11+dfsg-2) unstable; urgency=low
 
   * Switch to source format 3.0 (quilt)

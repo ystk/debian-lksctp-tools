@@ -98,6 +98,8 @@ main(void)
 	struct sctp_prim sprimaddr;/*SCTP_PRIMARY_ADDR set*/
 	struct sctp_assocparams sassocparams;  /* SCTP_ASSOCPARAMS set */
 	struct sctp_assocparams gassocparams;  /* SCTP_ASSOCPARAMS get */
+	int fd, err_no = 0;
+	char filename[21];
 
 	/* Rather than fflush() throughout the code, set stdout to
          * be unbuffered.
@@ -118,10 +120,19 @@ main(void)
 	tst_resm(TPASS, "setsockopt() with a bad socket descriptor - EBADF");
 
 	/*setsockopt() TEST2: Invalid socket ENOTSOCK, Expected error*/
-        error = setsockopt(0, IPPROTO_SCTP, 0, 0, 0);
-	if (error != -1 || errno != ENOTSOCK)
+	strcpy(filename, "/tmp/sctptest.XXXXXX");
+	fd = mkstemp(filename);
+	if (fd == -1)
+		tst_brkm(TBROK, tst_exit, "Failed to mkstemp %s: %s",
+				filename, strerror(errno));
+	error = setsockopt(fd, IPPROTO_SCTP, 0, 0, 0);
+	if (error == -1)
+		err_no = errno;
+	close(fd);
+	unlink(filename);
+	if (error != -1 || err_no != ENOTSOCK)
 		tst_brkm(TBROK, tst_exit, "setsockopt with an invalid socket "
-			 "error:%d, errno:%d", error, errno);
+			 "error:%d, errno:%d", error, err_no);
 
 	tst_resm(TPASS, "setsockopt() with an invalid socket - ENOTSOCK");
 
@@ -159,10 +170,19 @@ main(void)
 	tst_resm(TPASS, "getsockopt() with a bad socket descriptor - EBADF");
 
 	/*getsockopt() TEST7: Invalid socket ENOTSOCK, Expected error*/
-        error = getsockopt(0, IPPROTO_SCTP, 0, 0, 0);
-	if (error != -1 || errno != ENOTSOCK)
+	strcpy(filename, "/tmp/sctptest.XXXXXX");
+	fd = mkstemp(filename);
+	if (fd == -1)
+		tst_brkm(TBROK, tst_exit, "Failed to mkstemp %s: %s",
+				filename, strerror(errno));
+	error = getsockopt(fd, IPPROTO_SCTP, 0, 0, 0);
+	if (error == -1)
+		err_no = errno;
+	close(fd);
+	unlink(filename);
+	if (error != -1 || err_no != ENOTSOCK)
 		tst_brkm(TBROK, tst_exit, "getsockopt with an invalid socket "
-			 "error:%d, errno:%d", error, errno);
+			 "error:%d, errno:%d", error, err_no);
 
 	tst_resm(TPASS, "getsockopt() with an invalid socket - ENOTSOCK");
 #if 0
@@ -299,9 +319,9 @@ main(void)
 	tst_resm(TPASS, "getsockopt() SCTP_STATUS - SUCCESS");
 
 	/* Reducing the SO_RCVBUF value using setsockopt() */
-	/*Minimum value is 128 and hence I am using it*/
+	/* Upstream has changed the MIN_RCVBUF (2048 + sizeof(struct sk_buff)) */
 	len = sizeof(int);
-	rcvbuf_val_set = 128;
+	rcvbuf_val_set = 2048;
 	/* TEST16: Test case for setsockopt SO_RCVBUF */
 	error = setsockopt(sk2, SOL_SOCKET, SO_RCVBUF, &rcvbuf_val_set, len);
 	if (error < 0)
@@ -320,7 +340,7 @@ main(void)
 			 "got value differs Set Value=%d Get Value=%d",
 			 (2*rcvbuf_val_set), rcvbuf_val_get);
 
-	sndbuf_val_set=1024;
+	sndbuf_val_set = 2304;
 	/* TEST17: Test case for setsockopt SO_SNDBUF */
 	error = setsockopt(sk2, SOL_SOCKET, SO_SNDBUF, &sndbuf_val_set, len);
 	if (error < 0)

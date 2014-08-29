@@ -60,7 +60,6 @@
 #include <sys/socket.h>
 #include <sys/uio.h>
 #include <netinet/in.h>
-#include <sys/errno.h>
 #include <errno.h>
 #include <netinet/sctp.h>
 #include <sctputil.h>
@@ -86,11 +85,9 @@ main(int argc, char *argv[])
 	struct sctp_sndrcvinfo *sinfo;
         struct iovec out_iov;
         int error, bytes_sent;
-	int pf_class, af_family;
+	int pf_class;
 	uint32_t ppid;
 	uint32_t stream;
-	sctp_assoc_t associd1, associd2;
-	struct sctp_assoc_change *sac;
 	char *big_buffer;
 	int msg_len, msg_cnt, i;
 	void *msg_buf;
@@ -105,7 +102,6 @@ main(int argc, char *argv[])
 	/* Set some basic values which depend on the address family. */
 #if TEST_V6
 	pf_class = PF_INET6;
-	af_family = AF_INET6;
 
         loop1.v6.sin6_family = AF_INET6;
         loop1.v6.sin6_addr = in6addr_loopback;
@@ -116,7 +112,6 @@ main(int argc, char *argv[])
         loop2.v6.sin6_port = htons(SCTP_TESTPORT_2);
 #else
 	pf_class = PF_INET;
-	af_family = AF_INET;
 
         loop1.v4.sin_family = AF_INET;
         loop1.v4.sin_addr.s_addr = SCTP_IP_LOOPBACK;
@@ -182,19 +177,21 @@ main(int argc, char *argv[])
         error = test_recvmsg(sk2, &inmessage, MSG_WAITALL);
 	test_check_msg_notification(&inmessage, error,
 				    sizeof(struct sctp_assoc_change),
-				    SCTP_ASSOC_CHANGE, SCTP_COMM_UP);	
+				    SCTP_ASSOC_CHANGE, SCTP_COMM_UP);
+#if 0
 	sac = (struct sctp_assoc_change *)iov.iov_base;
 	associd2 = sac->sac_assoc_id;
-
+#endif
         /* Get the communication up message on sk1.  */
         inmessage.msg_controllen = sizeof(incmsg);
         error = test_recvmsg(sk1, &inmessage, MSG_WAITALL);
 	test_check_msg_notification(&inmessage, error,
 				    sizeof(struct sctp_assoc_change),
 				    SCTP_ASSOC_CHANGE, SCTP_COMM_UP);	
+#if 0
 	sac = (struct sctp_assoc_change *)iov.iov_base;
 	associd1 = sac->sac_assoc_id;
-
+#endif
         /* Get the first message which was sent.  */
         inmessage.msg_controllen = sizeof(incmsg);
         error = test_recvmsg(sk2, &inmessage, MSG_WAITALL);
@@ -224,7 +221,7 @@ main(int argc, char *argv[])
 	/* Try to send a messsage that exceeds association fragmentation point
 	 * and verify that it fails.
 	 */
-	msg_len = 30000;
+	msg_len = 100000;
 	msg_buf = test_build_msg(msg_len);
 	outmessage.msg_iov->iov_base = msg_buf;
 	outmessage.msg_iov->iov_len = msg_len;

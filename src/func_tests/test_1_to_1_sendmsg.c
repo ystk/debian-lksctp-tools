@@ -76,19 +76,18 @@ main(int argc, char *argv[])
 	int sk,sk1,pf_class,lstn_sk,acpt_sk,acpt1_sk, flag;
 	struct msghdr outmessage;
         char *message = "hello, world!\n";
-        struct iovec iov;
 	struct sctp_sndrcvinfo *sinfo;
         int count;
 	char outcmsg[CMSG_SPACE(sizeof(struct sctp_sndrcvinfo))];
 	struct cmsghdr *cmsg;
         struct iovec out_iov;
-        char * buffer;
 	struct msghdr inmessage;
-        char * buffer_snd;
 	char * buffer_rcv;
         struct sockaddr_in conn_addr,lstn_addr,svr_addr;
         struct iovec iov_rcv;
 	char incmsg[CMSG_SPACE(sizeof(sctp_cmsg_data_t))];
+	int fd, err_no = 0;
+	char filename[21];
 
 	/* Rather than fflush() throughout the code, set stdout to
          * be unbuffered.
@@ -125,8 +124,6 @@ main(int argc, char *argv[])
 	acpt_sk = test_accept(lstn_sk, (struct sockaddr *)&svr_addr, &len);
 
 	memset(&outmessage, 0, sizeof(outmessage));
-        buffer = malloc(REALLY_BIG);
-
         outmessage.msg_name = &conn_addr;
         outmessage.msg_namelen = sizeof(conn_addr);
         outmessage.msg_iov = &out_iov;
@@ -143,10 +140,7 @@ main(int argc, char *argv[])
 	sinfo = (struct sctp_sndrcvinfo *)CMSG_DATA(cmsg);
         memset(sinfo, 0x00, sizeof(struct sctp_sndrcvinfo));
 
-	iov.iov_base = buffer;
-        iov.iov_len = REALLY_BIG;
         outmessage.msg_iov->iov_base = message;
-
         outmessage.msg_iov->iov_len = strlen(message) + 1;
 
 	flag = MSG_NOSIGNAL;
@@ -159,10 +153,19 @@ main(int argc, char *argv[])
 	tst_resm(TPASS, "sendmsg() with a bad socket descriptor - EBADF");
 	
 	/*sendmsg () TEST2: Invalid socket, ENOTSOCK Expected error*/
-	count = sendmsg(0, &outmessage, flag);
-	if (count != -1 || errno != ENOTSOCK)
+	strcpy(filename, "/tmp/sctptest.XXXXXX");
+	fd = mkstemp(filename);
+	if (fd == -1)
+		tst_brkm(TBROK, tst_exit, "Failed to mkstemp %s: %s",
+				filename, strerror(errno));
+	count = sendmsg(fd, &outmessage, flag);
+	if (count == -1)
+		err_no = errno;
+	close(fd);
+	unlink(filename);
+	if (count != -1 || err_no != ENOTSOCK)
 		tst_brkm(TBROK, tst_exit, "sendmsg with invalid socket "
-			 "count:%d, errno:%d", count, errno);
+			 "count:%d, errno:%d", count, err_no);
 
 	tst_resm(TPASS, "sendmsg() with invalid socket - ENOTSOCK");
 
@@ -279,8 +282,6 @@ main(int argc, char *argv[])
 	acpt_sk = test_accept(lstn_sk, (struct sockaddr *)&svr_addr, &len);
 
 	memset(&outmessage, 0, sizeof(outmessage));
-        buffer_snd = malloc(REALLY_BIG);
-
         outmessage.msg_name = &svr_addr;
         outmessage.msg_namelen = sizeof(svr_addr);
         outmessage.msg_iov = &out_iov;
@@ -297,10 +298,7 @@ main(int argc, char *argv[])
 	sinfo = (struct sctp_sndrcvinfo *)CMSG_DATA(cmsg);
         memset(sinfo, 0x00, sizeof(struct sctp_sndrcvinfo));
 
-	iov.iov_base = buffer_snd;
-        iov.iov_len = REALLY_BIG;
         outmessage.msg_iov->iov_base = message;
-
         outmessage.msg_iov->iov_len = strlen(message) + 1;
 
 	memset(&inmessage, 0, sizeof(inmessage));

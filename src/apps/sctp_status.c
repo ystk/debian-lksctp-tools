@@ -127,7 +127,7 @@ int main(int argc, char *argv[]) {
 	struct sockaddr_in6 *t_addr6;
 
 	/* Parse the arguments.  */
-	while ((c = getopt(argc, argv, ":H:L:P:h:p:c:d:lm:sx:X:o:M:r:Di:I:f:")) >= 0 ) {
+	while ((c = getopt(argc, argv, ":H:L:P:h:p:c:d:lm:sx:X:o:M:Di:I:f:")) >= 0 ) {
 		switch (c) {
 		case 'H':
 			local_host = optarg;
@@ -547,6 +547,8 @@ int receive_r(int sk)
 } /* receive_r () */
 
 void server(int sk) {
+	int i;
+
 	if (max_msgsize > DEFAULT_MAX_WINDOW) {
 		if (setsockopt(sk, IPPROTO_SCTP, SO_RCVBUF, &max_msgsize,
 			       sizeof(max_msgsize)) < 0) {
@@ -555,7 +557,10 @@ void server(int sk) {
 		}
 	}
 
-	receive_r(sk);
+	for (i = 0; i < msg_cnt; i++) {
+		receive_r(sk);
+		DEBUG_PRINT(DEBUG_MIN, "count %d\n", i+1);
+	}
 } /* server() */
 
 void * build_msg(int len) {
@@ -670,11 +675,11 @@ int next_stream(int state, int pattern)
 {
 	switch (pattern){
 	case STREAM_PATTERN_RANDOM:
-		state = rand() % (max_stream + 1);
+		state = rand() % max_stream;
 		break;
 	case STREAM_PATTERN_SEQUENTIAL:
 		state = state + 1;
-		if (state > max_stream)
+		if (state >= max_stream)
 			state = 0;
 		break;
 	}
@@ -718,7 +723,7 @@ void client(int sk) {
 } /* client() */
 
 void start_test(int role) {
-	int sk, pid;
+	int sk, pid, ret;
 	int i = 0;
 
 	DEBUG_PRINT(DEBUG_NONE, "\nStarting tests...\n");
@@ -740,6 +745,22 @@ void start_test(int role) {
 		listen_r(sk, 1);
 		accept_r(sk);
 	} else {
+		if (max_stream > 0) {
+			struct sctp_initmsg initmsg;
+
+			memset(&initmsg, 0, sizeof(initmsg));
+			initmsg.sinit_num_ostreams = max_stream;
+			initmsg.sinit_max_instreams = max_stream;
+			initmsg.sinit_max_attempts = 3;
+
+			ret = setsockopt(sk, IPPROTO_SCTP, SCTP_INITMSG,
+					 &initmsg, sizeof(initmsg));
+			if (ret < 0) {
+				perror("setsockopt(SCTP_INITMSG)");
+				exit(0);
+			}
+		}
+
 		connect_r(sk, (struct sockaddr *)&s_rem, r_len);
 	}
 
@@ -812,6 +833,7 @@ void usage(char *argv0) {
 	fprintf(stderr, "\t-c value = Packets of specifed size.\n");
 	fprintf(stderr, "\t-m msgsize(1500-65515, default value 32768)\n");
 	fprintf(stderr, "\t-x number of repeats\n");
+	fprintf(stderr, "\t-X number of messages\n");
 	fprintf(stderr, "\t-o order-pattern\n");
 	fprintf(stderr, "\t   0 = all unordered(default) \n");
 	fprintf(stderr, "\t   1 = all ordered \n");
@@ -819,6 +841,7 @@ void usage(char *argv0) {
 	fprintf(stderr, "\t   3 = random\n");
 	fprintf(stderr, "\t-M max-stream (default value 0)\n");
 	fprintf(stderr, "\t-D drain. If in client mode do a read following send.\n");
+	fprintf(stderr, "\t-I receive after <n> times of send, default value 1.\n");
 	fprintf(stderr, "\n");
 	fflush(stderr);
 
@@ -860,6 +883,12 @@ void printstatus(int sk) {
 	struct sctp_status status;
 	socklen_t optlen;
 	FILE * fp;
+	const char *state_to_str[] = {
+		[SCTP_INACTIVE]		=	"INACTIVE",
+		[SCTP_PF]		=	"PF",
+		[SCTP_ACTIVE]		=	"ACTIVE",
+		[SCTP_UNCONFIRMED]	=	"UNCONFIRMED",
+	};
 
 	optlen = sizeof(struct sctp_status);
 	if(getsockopt(sk, IPPROTO_SCTP, SCTP_STATUS, &status, &optlen) < 0) {
@@ -889,7 +918,7 @@ void printstatus(int sk) {
 				status.sstat_assoc_id, get_sstat_state(status.sstat_state),
 				status.sstat_rwnd, status.sstat_unackdata, status.sstat_penddata,
 				status.sstat_instrms, status.sstat_outstrms, status.sstat_fragmentation_point,
-				(status.sstat_primary.spinfo_state == 1) ? "ACTIVE" : "INACTIVE",
+				state_to_str[status.sstat_primary.spinfo_state],
 				status.sstat_primary.spinfo_cwnd, status.sstat_primary.spinfo_srtt,
 				status.sstat_primary.spinfo_rto, status.sstat_primary.spinfo_mtu);
 	}
@@ -901,7 +930,7 @@ void printstatus(int sk) {
 	if (fp != stdout)
 		fclose(fp);
 
-	if (status.sstat_primary.spinfo_state != 1) {
+	if (status.sstat_primary.spinfo_state != SCTP_ACTIVE) {
 		close_r(sk);
 		exit(1);
 	}

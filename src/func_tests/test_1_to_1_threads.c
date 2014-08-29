@@ -64,7 +64,7 @@ struct sockaddr_in  conn_addr;
 char *message = "hello, world!\n";
 
 void 
-t_recv (int id) {
+t_recv(void) {
 	int cnt;
 	struct msghdr inmessage;
 	struct iovec iov;
@@ -87,17 +87,14 @@ t_recv (int id) {
 }
 
 void
-t_send(int id) {
+t_send(void) {
         struct msghdr outmessage;
         struct sctp_sndrcvinfo *sinfo;
-        char *buffer_snd;
         struct cmsghdr *cmsg;
         struct iovec out_iov;
         char outcmsg[CMSG_SPACE(sizeof(sctp_cmsg_data_t))];
 
         memset(&outmessage, 0, sizeof(outmessage));
-        buffer_snd = malloc(100);
-
         outmessage.msg_name = &conn_addr;
         outmessage.msg_namelen = sizeof(conn_addr);
         outmessage.msg_iov = &out_iov;
@@ -120,25 +117,26 @@ t_send(int id) {
         test_sendmsg(client_sk, &outmessage, 0, strlen(message)+1);
 }
 
-void * relay (int id) {
+void *relay(void *arg)
+{
+	int id = *(int *) arg;
+
 	if (id == 0) {
-		t_send(id);
-	} else if (id == THREADS -1) {
-		t_send(id);	
+		t_send();
 	} else {
-		t_recv (id);
-		t_send(id);
+		t_recv();
+		t_send();
 	}
 
-	return 0;
+	pthread_exit(NULL);
 }
-	
 
 int 
 main(void) 
 {
 
 	int      cnt,i;
+	int      pth[THREADS];
 	pthread_t       thread[THREADS];
 	int  status;
 	int  exit_status;
@@ -172,9 +170,9 @@ main(void)
 	acpt_sk = test_accept(server_sk, (struct sockaddr *)&svr_addr, &len);
 
 	for ( i = 0; i < THREAD_SND_RCV_LOOPS; i++ ) {
-		for (cnt = 1; cnt < THREADS; cnt++) {
-			status = pthread_create(&thread[cnt], &attr,
-						(void *)relay, (void*)cnt);
+		for (cnt = 0; cnt < THREADS; cnt++) {
+			pth[cnt] = cnt;
+			status = pthread_create(&thread[cnt], &attr, relay, &pth[cnt]);
 			if (status)
 				tst_brkm(TBROK, tst_exit, "pthread_create "
                          		 "failed status:%d, errno:%d", status,
@@ -182,7 +180,7 @@ main(void)
 		}
 
 		pthread_attr_destroy(&attr);
-		for (cnt = 1; cnt < THREADS ; cnt++) {
+		for (cnt = 0; cnt < THREADS ; cnt++) {
 			exit_status = pthread_join (thread[cnt], &result);
 			if (exit_status == -1)
 				tst_brkm(TBROK, tst_exit, "pthread_join "
@@ -194,5 +192,5 @@ main(void)
 	tst_resm(TPASS, "send and receive data across multiple threads - "
 		 "SUCCESS");
 
-	pthread_exit(NULL);
+	return 0;
 }

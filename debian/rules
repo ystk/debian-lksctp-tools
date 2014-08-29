@@ -1,8 +1,14 @@
 #!/usr/bin/make -f
 
 %:
-	dh $@ --with autotools_dev
+	dh $@ --with autoreconf
+
+override_dh_autoreconf:
+	dh_autoreconf ./bootstrap
 
 # Do not create a shlibs file for libwithsctp.
 override_dh_makeshlibs:
 	dh_makeshlibs -Xlibwithsctp
+
+override_dh_install:
+	dh_install --list-missing
